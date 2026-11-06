@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comité de Menú - Taquería Gourmet Morelia</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            bg: '#0d0d0f',
+                            card: '#161619',
+                            cardHover: '#1f1f24',
+                            border: '#27272e',
+                            amber: '#f59e0b',
+                            amberHover: '#d97706',
+                            gold: '#fbbf24'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0d0d0f;
+            color: #e4e4e7;
+        }
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111114;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272e;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-amber-500 selection:text-black">
+
+    <!-- Encabezado y Navegación Principal -->
+    <header class="bg-brand-card/90 backdrop-blur-md border-b border-brand-border sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Logotipo y Título del Proyecto -->
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-black font-extrabold text-xl shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-fire-flame-curved"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white leading-none">Comité de Menú • Taquería Gourmet</h1>
+                    <p class="text-xs text-amber-500/90 font-semibold mt-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-location-dot text-[10px]"></i> Proyecto Morelia • Votación de Socios
+                    </p>
+                </div>
+            </div>
+
+            <!-- Selector de Socio Activo -->
+            <div class="flex items-center gap-2 bg-black/60 p-1.5 rounded-2xl border border-brand-border">
+                <span class="text-[11px] font-bold text-zinc-400 pl-2 uppercase tracking-wider hidden md:inline">Socio Activo:</span>
+                <div class="flex items-center gap-1.5" id="partnerBadgesContainer">
+                    <!-- Botones dinámicos de los socios -->
+                </div>
+            </div>
+
+            <!-- Acciones de Gestión y Exportación -->
+            <div class="flex items-center gap-2">
+                <button onclick="openNewDishModal()" class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold px-3.5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-md shadow-amber-500/20">
+                    <i class="fa-solid fa-plus text-sm"></i>
+                    <span class="hidden sm:inline">Proponer Platillo</span>
+                </button>
+                <button onclick="exportData()" title="Exportar archivo de votaciones para WhatsApp" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold px-3 py-2.5 rounded-xl transition border border-zinc-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-download text-amber-400"></i>
+                    <span class="hidden md:inline">Exportar Votos</span>
+                </button>
+                <button onclick="triggerImport()" title="Cargar archivo de votación de otro socio" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold px-3 py-2.5 rounded-xl transition border border-zinc-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-upload text-amber-400"></i>
+                    <span class="hidden md:inline">Cargar Votos</span>
+                </button>
+                <input type="file" id="importFileInput" class="hidden" accept=".json" onchange="importData(event)">
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Tablero de Estado y Consenso -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <div class="bg-brand-card p-4 rounded-2xl border border-brand-border flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-zinc-400 font-medium">Platillos en Evaluación</span>
+                    <div class="text-2xl font-extrabold text-white" id="statTotalItems">0</div>
+                </div>
+            </div>
+
+            <div class="bg-brand-card p-4 rounded-2xl border border-brand-border flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-zinc-400 font-medium">Aprobados (≥3 Socios Sí)</span>
+                    <div class="text-2xl font-extrabold text-emerald-400" id="statApprovedItems">0</div>
+                </div>
+            </div>
+
+            <div class="bg-brand-card p-4 rounded-2xl border border-brand-border flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-comments-dollar"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-zinc-400 font-medium">Platillos en Debate</span>
+                    <div class="text-2xl font-extrabold text-amber-400" id="statDiscussionItems">0</div>
+                </div>
+            </div>
+
+            <div class="bg-brand-card p-4 rounded-2xl border border-brand-border flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-user-pen"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-zinc-400 font-medium">Avance de Tu Votación</span>
+                    <div class="text-2xl font-extrabold text-purple-400" id="statPartnerProgress">0%</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Barra de Categorías y Filtros -->
+        <div class="bg-brand-card p-4 rounded-2xl border border-brand-border flex flex-col lg:flex-row gap-4 items-center justify-between">
+            
+            <!-- Pestañas de Categorías Simplificadas -->
+            <div class="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0 scrollbar-none" id="categoryFilterContainer">
+                <!-- Se insertan botones dinámicamente -->
+            </div>
+
+            <!-- Filtros Secundarios y Búsqueda -->
+            <div class="flex items-center gap-3 w-full lg:w-auto">
+                <select id="statusFilter" onchange="renderMenu()" class="bg-black/60 border border-brand-border text-xs rounded-xl px-3 py-2.5 text-zinc-300 focus:outline-none focus:border-amber-500">
+                    <option value="ALL">Todos los Estados</option>
+                    <option value="APPROVED">🟢 Menú Aprobado (Mayoría)</option>
+                    <option value="DISCUSSION">🟡 En Discusión / Indecisos</option>
+                    <option value="REJECTED">🔴 Descartados</option>
+                    <option value="PENDING_PARTNER">⏳ Pendientes de Tu Voto</option>
+                </select>
+
+                <select id="benchmarkFilter" onchange="renderMenu()" class="bg-black/60 border border-brand-border text-xs rounded-xl px-3 py-2.5 text-zinc-300 focus:outline-none focus:border-amber-500">
+                    <option value="ALL">Todas las Fuentes</option>
+                    <option value="PROPOSED">💡 Propuestas de Socios</option>
+                    <option value="La Once Mil">La Once Mil</option>
+                    <option value="Tacos París">Tacos París</option>
+                    <option value="Tacos Atarantados">Tacos Atarantados</option>
+                </select>
+
+                <div class="relative flex-1 lg:w-48">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-zinc-500 text-xs"></i>
+                    <input type="text" id="searchInput" oninput="renderMenu()" placeholder="Buscar elemento..." class="w-full bg-black/60 border border-brand-border text-xs rounded-xl pl-8 pr-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500">
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Grilla Principal de Platillos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="menuCardsContainer">
+            <!-- Se insertan tarjetas dinámicamente -->
+        </div>
+
+        <!-- Estado Vacío -->
+        <div id="emptyState" class="hidden text-center py-16 bg-brand-card/50 rounded-3xl border border-dashed border-zinc-800">
+            <div class="w-16 h-16 bg-zinc-800/80 rounded-2xl flex items-center justify-center text-zinc-500 text-2xl mx-auto mb-3">
+                <i class="fa-solid fa-utensils"></i>
+            </div>
+            <h3 class="text-zinc-300 font-semibold text-base">No hay platillos en esta vista</h3>
+            <p class="text-xs text-zinc-500 mt-1">Ajusta los filtros de búsqueda o agrega una nueva propuesta para el equipo.</p>
+        </div>
+
+    </main>
+
+    <!-- Modal: Proponer Nuevo Platillo -->
+    <div id="newDishModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-brand-card border border-brand-border rounded-3xl max-w-lg w-full p-6 shadow-2xl relative space-y-4">
+            <div class="flex items-center justify-between border-b border-brand-border pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-lightbulb text-amber-400"></i> Proponer Nuevo Platillo al Menú
+                </h3>
+                <button onclick="closeNewDishModal()" class="text-zinc-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="newDishForm" onsubmit="handleNewDishSubmit(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-zinc-400 font-medium mb-1">Nombre del Platillo *</label>
+                    <input type="text" id="dishName" required placeholder="Ej: Guacamole con Chicharrón de La Ramos" class="w-full bg-black/60 border border-brand-border rounded-xl px-3 py-2 text-white focus:border-amber-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-zinc-400 font-medium mb-1">Categoría Principal *</label>
+                        <select id="dishCategory" required class="w-full bg-black/60 border border-brand-border rounded-xl px-3 py-2 text-white focus:border-amber-500 focus:outline-none">
+                            <option value="Entradas y Botanas">Entradas y Botanas</option>
+                            <option value="Tacos">Tacos</option>
+                            <option value="Tacos Árabes y Pan Pita">Tacos Árabes y Pan Pita</option>
+                            <option value="Costras y Quesos">Costras y Quesos</option>
+                            <option value="Salsas de Mesa">Salsas de Mesa</option>
+                            <option value="Postres">Postres</option>
+                            <option value="Bebidas">Bebidas</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-zinc-400 font-medium mb-1">Origen / Promotor *</label>
+                        <input type="text" id="dishSource" required value="Propuesta de Socio" placeholder="Ej: Propuesta de César" class="w-full bg-black/60 border border-brand-border rounded-xl px-3 py-2 text-white focus:border-amber-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-zinc-400 font-medium mb-1">Descripción y Argumento del Concepto</label>
+                    <textarea id="dishDescription" rows="3" placeholder="Explica por qué este platillo aportará valor al concepto en Morelia..." class="w-full bg-black/60 border border-brand-border rounded-xl px-3 py-2 text-white focus:border-amber-500 focus:outline-none resize-none"></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeNewDishModal()" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold shadow-md shadow-amber-500/20">Registrar Propuesta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lógica de la Aplicación -->
+    <script>
+        // Definición Fija de los 4 Socios Exactos
+        const partners = [
+            { id: 'partner_1', name: 'César', color: 'amber' },
+            { id: 'partner_2', name: 'Alejandro', color: 'emerald' },
+            { id: 'partner_3', name: 'Rodrigo', color: 'blue' },
+            { id: 'partner_4', name: 'Fernando', color: 'purple' }
+        ];
+
+        let activePartnerId = 'partner_1';
+
+        // Catálogo Base de Platillos (Sin datos de precios ni food cost)
+        const defaultMenuItems = [
+            // ENTRADAS Y BOTANAS
+            {
+                id: 'ent_1',
+                name: 'Guacamole con Chicharrón de La Ramos',
+                category: 'Entradas y Botanas',
+                source: 'Propuesta de César',
+                description: 'Guacamole martajado en molcajete de piedra, coronado con trozos crujientes de chicharrón prensado de La Ramos y totopos de maíz azul.',
+                votes: {}
+            },
+            {
+                id: 'ent_2',
+                name: 'Papas Cambray Tatemadas a las Brasas',
+                category: 'Entradas y Botanas',
+                source: 'Propuesta de Rodrigo',
+                description: 'Papas cambray rostizadas al carbón con emulsión de chile serrano, limón agrio, queso fresco local y cilantro picado.',
+                votes: {}
+            },
+            {
+                id: 'ent_3',
+                name: 'French Frais Trufadas',
+                category: 'Entradas y Botanas',
+                source: 'Tacos París',
+                description: 'Papas a la francesa sazonadas con aceite de trufa blanca, sal de mar, queso parmesano y cebollín fino.',
+                votes: {}
+            },
+            {
+                id: 'ent_4',
+                name: 'Elote Atarantado con Doritos',
+                category: 'Entradas y Botanas',
+                source: 'Tacos Atarantados',
+                description: 'Elote entero horneado a las brasas, empanizado en crocante de Doritos Nachos, mayonesa de la casa y queso cotija.',
+                votes: {}
+            },
+            {
+                id: 'ent_5',
+                name: 'Papada de Cerdo Cítrica',
+                category: 'Entradas y Botanas',
+                source: 'Tacos París',
+                description: 'Corte crujiente de papada de cerdo marinado en vinagreta de cítricos y chiles tatemados.',
+                votes: {}
+            },
+            {
+                id: 'ent_6',
+                name: 'Frijoles Puercos Norteños',
+                category: 'Entradas y Botanas',
+                source: 'Tacos Atarantados',
+                description: 'Frijoles refritos estilo norteño guisados con chorizo de la casa, tocino, queso manchego y chiles en vinagre.',
+                votes: {}
+            },
+            {
+                id: 'ent_7',
+                name: 'Sopa de Fideo Tlalpeño',
+                category: 'Entradas y Botanas',
+                source: 'La Once Mil',
+                description: 'Sopa tradicional de fideo en caldo de pollo con aguacate, queso oaxaca fundido y chipotle.',
+                votes: {}
+            },
+
+            // TACOS
+            {
+                id: 'tac_1',
+                name: 'Trompo Sirloin / Picaña Black Angus',
+                category: 'Tacos',
+                source: 'La Once Mil',
+                description: 'Taco preparado con láminas de Sirloin y Picaña Angus marinadas en adobo ligero y asadas al trompo vertical.',
+                votes: {}
+            },
+            {
+                id: 'tac_2',
+                name: 'Trompo Puerco Negro (Ceniza)',
+                category: 'Tacos',
+                source: 'Tacos Atarantados',
+                description: 'Carne de cerdo marinada en adobo de chiles secos tatemados a la ceniza de carbón (Servido en orden de 3 tacos).',
+                votes: {}
+            },
+            {
+                id: 'tac_3',
+                name: 'Trompo Puerco Rojo Tradicional',
+                category: 'Tacos',
+                source: 'Tacos Atarantados',
+                description: 'El taco al pastor clásico adobado con piña asada, cebolla picada y cilantro fresco.',
+                votes: {}
+            },
+            {
+                id: 'tac_4',
+                name: 'Taco de Rib Eye Chairman Reserve',
+                category: 'Tacos',
+                source: 'La Once Mil',
+                description: 'Corte Premium de Ribeye Angus asado al carbón sobre tortilla de maíz nixtamalizado hecha al momento.',
+                votes: {}
+            },
+            {
+                id: 'tac_5',
+                name: 'Taco Dirty (Ribeye, Papas y Costra)',
+                category: 'Tacos',
+                source: 'Tacos París',
+                description: 'Ribeye picado a la plancha combinado con frijoles puercos, papas de la casa y costra de queso manchego.',
+                votes: {}
+            },
+            {
+                id: 'tac_6',
+                name: 'Delgadita de Wagyu A5 Japonés',
+                category: 'Tacos',
+                source: 'La Once Mil',
+                description: 'Fina lámina de Wagyu A5 Japonés sellada sobre tortilla delgada de harina con escamas de sal de Colima.',
+                votes: {}
+            },
+            {
+                id: 'tac_7',
+                name: 'Ovalito de Róbalo al Pastor',
+                category: 'Tacos',
+                source: 'La Once Mil',
+                description: 'Filete de róbalo marinado en adobo tradicional de pastor, salteado al carbón con piña caramelizada.',
+                votes: {}
+            },
+            {
+                id: 'tac_8',
+                name: 'Taco de Lechón y Pork Belly',
+                category: 'Tacos',
+                source: 'La Once Mil',
+                description: 'Carnitas de lechón suave combinadas con chicharrón crujiente de Pork Belly.',
+                votes: {}
+            },
+            {
+                id: 'tac_9',
+                name: 'Suadero Atarantado con Costra',
+                category: 'Tacos',
+                source: 'Tacos Atarantados',
+                description: 'Suadero confitado suave envuelto en costra de queso fundido.',
+                votes: {}
+            },
+
+            // TACOS ÁRABES Y PAN PITA
+            {
+                id: 'ara_1',
+                name: 'Árabe de Puerco en Pan Pita',
+                category: 'Tacos Árabes y Pan Pita',
+                source: 'Tacos Atarantados',
+                description: 'Carne adobada especiada estilo oriental servida dentro de pan pita recién horneado con jocoque seco.',
+                votes: {}
+            },
+            {
+                id: 'ara_2',
+                name: 'Árabe de Res con Aderezo Tzatziki',
+                category: 'Tacos Árabes y Pan Pita',
+                source: 'Tacos Atarantados',
+                description: 'Láminas de res marinado en pan pita artesanal con aderezo fresco de tzatziki (yogurt, pepino y menta).',
+                votes: {}
+            },
+            {
+                id: 'ara_3',
+                name: 'Árabe de Cordero Especiado',
+                category: 'Tacos Árabes y Pan Pita',
+                source: 'Tacos Atarantados',
+                description: 'Carne de cordero sazonada con especias de oriente en pan pita caliente.',
+                votes: {}
+            },
+            {
+                id: 'ara_4',
+                name: 'Árabe de Falafel (Vegetariano)',
+                category: 'Tacos Árabes y Pan Pita',
+                source: 'Tacos Atarantados',
+                description: 'Croquetas de garbanzo especiado con hummus y ensalada fresca de pepino en pan pita.',
+                votes: {}
+            },
+
+            // COSTRAS Y QUESOS
+            {
+                id: 'cos_1',
+                name: 'Costritas de Queso con Lámina de Carne',
+                category: 'Costras y Quesos',
+                source: 'Propuesta de Alejandro',
+                description: 'Costras tubulares de queso fundido crujiente rellenas de finas láminas de arrachera o sirloin.',
+                votes: {}
+            },
+            {
+                id: 'cos_2',
+                name: 'Cachetada de Frijol y Queso',
+                category: 'Costras y Quesos',
+                source: 'La Once Mil',
+                description: 'Tortilla de harina sobaquera doblada con capa generosa de frijoles refritos y queso manchego.',
+                votes: {}
+            },
+            {
+                id: 'cos_3',
+                name: 'Volcán Atarantado de Carne Asada',
+                category: 'Costras y Quesos',
+                source: 'Tacos Atarantados',
+                description: 'Tortilla de maíz tostada al carbón con base de queso fundido gratinado y carne asada arriba.',
+                votes: {}
+            },
+
+            // SALSAS DE MESA
+            {
+                id: 'sal_1',
+                name: 'Salsa Negra Tatemada en Molcajete',
+                category: 'Salsas de Mesa',
+                source: 'La Once Mil',
+                description: 'La célebre salsa negra hecha con chiles secos (morita, pasilla y habanero negro) reducidos en aceite ahumado.',
+                votes: {}
+            },
+            {
+                id: 'sal_2',
+                name: 'Salsa de Ceniza',
+                category: 'Salsas de Mesa',
+                source: 'Tacos Atarantados',
+                description: 'Chiles secos tatemados al carbón extremo con toques de ajo y aceite de ajonjolí.',
+                votes: {}
+            },
+            {
+                id: 'sal_3',
+                name: 'Salsa de Cacahuate Tostado',
+                category: 'Salsas de Mesa',
+                source: 'Tacos Atarantados',
+                description: 'Salsa cremosa y picosa a base de cacahuate tostado y chile de árbol.',
+                votes: {}
+            },
+            {
+                id: 'sal_4',
+                name: 'Emulsión de Habanero Quemado',
+                category: 'Salsas de Mesa',
+                source: 'Tacos París',
+                description: 'Aderezo cremoso de habanero tatemado con mantequilla noisette y limón.',
+                votes: {}
+            },
+            {
+                id: 'sal_5',
+                name: 'Salsa de Chicharroncito Martajado',
+                category: 'Salsas de Mesa',
+                source: 'La Once Mil',
+                description: 'Salsa roja de chile de árbol con trozos crujientes de chicharrón integrados en mesa.',
+                votes: {}
+            },
+
+            // POSTRES
+            {
+                id: 'pos_1',
+                name: 'Cachetada de Gloria con Cajeta de Celaya',
+                category: 'Postres',
+                source: 'Tacos Atarantados',
+                description: 'Tortilla de harina doradita con queso manchego fundido, cajeta artesanal y un dulce tradicional de Gloria.',
+                votes: {}
+            },
+            {
+                id: 'pos_2',
+                name: 'Churros con Sundae de Pistache',
+                category: 'Postres',
+                source: 'Tacos París',
+                description: 'Churros crujientes recién hechos servidos sobre una copa de gelato artesanal de pistache.',
+                votes: {}
+            },
+            {
+                id: 'pos_3',
+                name: 'Pastel de Tres Leches con Merengue',
+                category: 'Postres',
+                source: 'La Once Mil',
+                description: 'Pastel suave de tres leches decorado con frutos rojos frescos y merengue tostado.',
+                votes: {}
+            },
+            {
+                id: 'pos_4',
+                name: 'Helado con Aceite de Oliva y Sal de Mar',
+                category: 'Postres',
+                source: 'Tacos París',
+                description: 'Bola de helado de vainilla perfumada con hilo de aceite de oliva extra virgen y escamas de sal.',
+                votes: {}
+            },
+
+            // BEBIDAS
+            {
+                id: 'beb_1',
+                name: 'Agua Fresca Horchata con Nuez',
+                category: 'Bebidas',
+                source: 'Propuesta de Fernando',
+                description: 'Agua artesanal concentrada de horchata con canela, leche condensada y trozos de nuez garapiñada.',
+                votes: {}
+            },
+            {
+                id: 'beb_2',
+                name: 'Cerveza de Litro en Tarro Helado',
+                category: 'Bebidas',
+                source: 'La Once Mil',
+                description: 'Cerveza de barril nacional servida en tarro gigante escarchado con sal y limón.',
+                votes: {}
+            },
+            {
+                id: 'beb_3',
+                name: 'Coctelería de Autor con Mezcal Michoacano',
+                category: 'Bebidas',
+                source: 'Propuesta de César',
+                description: 'Tragos preparados con mezcal artesanal de Michoacán, pulpa de maracuyá y sal de gusano.',
+                votes: {}
+            }
+        ];
+
+        let menuItems = [];
+        let currentCategory = 'ALL';
+
+        const categories = [
+            'ALL',
+            'Entradas y Botanas',
+            'Tacos',
+            'Tacos Árabes y Pan Pita',
+            'Costras y Quesos',
+            'Salsas de Mesa',
+            'Postres',
+            'Bebidas'
+        ];
+
+        // Inicialización
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLocalStorage();
+            renderPartnerBadges();
+            renderCategoryTabs();
+            renderMenu();
+        });
+
+        // Operaciones de Almacenamiento Local
+        function loadLocalStorage() {
+            const savedItems = localStorage.getItem('morelia_menu_v3_items');
+            const savedActive = localStorage.getItem('morelia_menu_v3_active_partner');
+
+            if (savedItems) {
+                menuItems = JSON.parse(savedItems);
+            } else {
+                menuItems = [...defaultMenuItems];
+                saveLocalStorage();
+            }
+
+            if (savedActive) {
+                activePartnerId = savedActive;
+            }
+        }
+
+        function saveLocalStorage() {
+            localStorage.setItem('morelia_menu_v3_items', JSON.stringify(menuItems));
+            localStorage.setItem('morelia_menu_v3_active_partner', activePartnerId);
+        }
+
+        // Renderizar Selector de Socios
+        function renderPartnerBadges() {
+            const container = document.getElementById('partnerBadgesContainer');
+            container.innerHTML = partners.map(p => {
+                const isActive = p.id === activePartnerId;
+                return `
+                    <button onclick="switchPartner('${p.id}')" 
+                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                            isActive 
+                            ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20 scale-105' 
+                            : 'bg-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-700'
+                        }">
+                        <i class="fa-solid fa-user-check ${isActive ? 'text-black' : 'text-zinc-500'}"></i>
+                        <span>${p.name}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function switchPartner(id) {
+            activePartnerId = id;
+            saveLocalStorage();
+            renderPartnerBadges();
+            renderMenu();
+        }
+
+        // Renderizar Pestañas de Categorías
+        function renderCategoryTabs() {
+            const container = document.getElementById('categoryFilterContainer');
+            container.innerHTML = categories.map(cat => {
+                const isActive = cat === currentCategory;
+                const label = cat === 'ALL' ? 'Todas las Categorías' : cat;
+                return `
+                    <button onclick="setCategory('${cat}')" 
+                        class="px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
+                            isActive 
+                            ? 'bg-zinc-200 text-black font-bold shadow-sm' 
+                            : 'bg-black/50 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-brand-border'
+                        }">
+                        ${label}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function setCategory(cat) {
+            currentCategory = cat;
+            renderCategoryTabs();
+            renderMenu();
+        }
+
+        // Renderizar Tarjetas del Menú
+        function renderMenu() {
+            const container = document.getElementById('menuCardsContainer');
+            const emptyState = document.getElementById('emptyState');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const benchmarkFilter = document.getElementById('benchmarkFilter').value;
+
+            const filtered = menuItems.filter(item => {
+                if (currentCategory !== 'ALL' && item.category !== currentCategory) return false;
+
+                if (searchTerm && !item.name.toLowerCase().includes(searchTerm) && !item.description.toLowerCase().includes(searchTerm)) {
+                    return false;
+                }
+
+                if (benchmarkFilter !== 'ALL') {
+                    if (benchmarkFilter === 'PROPOSED' && !item.source.startsWith('Propuesta')) return false;
+                    if (benchmarkFilter !== 'PROPOSED' && item.source !== benchmarkFilter) return false;
+                }
+
+                const consensus = calculateConsensus(item);
+                if (statusFilter === 'APPROVED' && consensus.status !== 'APPROVED') return false;
+                if (statusFilter === 'DISCUSSION' && consensus.status !== 'DISCUSSION') return false;
+                if (statusFilter === 'REJECTED' && consensus.status !== 'REJECTED') return false;
+                if (statusFilter === 'PENDING_PARTNER') {
+                    const myVote = item.votes[activePartnerId];
+                    if (myVote && myVote.decision) return false;
+                }
+
+                return true;
+            });
+
+            updateOverviewStats();
+
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            container.innerHTML = filtered.map(item => {
+                const consensus = calculateConsensus(item);
+                const myVote = item.votes[activePartnerId] || { rating: 0, decision: null, comment: '' };
+
+                let statusBadgeHTML = '';
+                if (consensus.status === 'APPROVED') {
+                    statusBadgeHTML = `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-extrabold px-2.5 py-1 rounded-full"><i class="fa-solid fa-circle-check mr-1"></i>Aprobado (${consensus.yesVotes}/4 Sí)</span>`;
+                } else if (consensus.status === 'REJECTED') {
+                    statusBadgeHTML = `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-extrabold px-2.5 py-1 rounded-full"><i class="fa-solid fa-circle-xmark mr-1"></i>Descartado</span>`;
+                } else {
+                    statusBadgeHTML = `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-extrabold px-2.5 py-1 rounded-full"><i class="fa-solid fa-comments mr-1"></i>En Discusión (${consensus.yesVotes}/4 Sí)</span>`;
+                }
+
+                const partnerVotesPills = partners.map(p => {
+                    const v = item.votes[p.id];
+                    let icon = '<i class="fa-solid fa-minus text-zinc-600"></i>';
+                    let bg = 'bg-zinc-800/50 text-zinc-500 border-zinc-700/50';
+
+                    if (v && v.decision === 'YES') {
+                        icon = '<i class="fa-solid fa-check text-emerald-400"></i>';
+                        bg = 'bg-emerald-500/20 border-emerald-500/30';
+                    } else if (v && v.decision === 'NO') {
+                        icon = '<i class="fa-solid fa-xmark text-rose-400"></i>';
+                        bg = 'bg-rose-500/20 border-rose-500/30';
+                    } else if (v && v.decision === 'MAYBE') {
+                        icon = '<i class="fa-solid fa-question text-amber-400"></i>';
+                        bg = 'bg-amber-500/20 border-amber-500/30';
+                    }
+
+                    return `
+                        <div class="flex flex-col items-center gap-0.5" title="${p.name}: ${v?.decision ? (v.decision === 'YES' ? 'A favor' : v.decision === 'NO' ? 'En contra' : 'Quizá') : 'Pendiente'}">
+                            <span class="text-[9px] font-semibold text-zinc-400">${p.name}</span>
+                            <div class="w-6 h-6 rounded-lg border ${bg} flex items-center justify-center text-xs">
+                                ${icon}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-brand-card border border-brand-border rounded-3xl p-5 flex flex-col justify-between hover:border-amber-500/40 transition-all duration-200 shadow-xl relative">
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-start justify-between gap-2">
+                                <span class="bg-zinc-800 text-zinc-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border border-zinc-700/60">
+                                    ${item.category}
+                                </span>
+                                ${statusBadgeHTML}
+                            </div>
+
+                            <div>
+                                <h3 class="text-base font-bold text-white leading-snug">${item.name}</h3>
+                                <p class="text-xs text-amber-400/90 font-semibold mt-1 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-bookmark text-[10px]"></i> Origen: ${item.source}
+                                </p>
+                            </div>
+
+                            <p class="text-xs text-zinc-400 leading-relaxed">${item.description}</p>
+                        </div>
+
+                        <!-- Sección de Votación del Socio Activo -->
+                        <div class="mt-4 pt-4 border-t border-brand-border space-y-3">
+                            
+                            <div class="bg-black/60 p-3 rounded-2xl border border-zinc-800 space-y-2.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-user-pen text-amber-400"></i> Tu Voto (${getActivePartnerName()}):
+                                    </span>
+                                    
+                                    <!-- Calificación de Estrellas -->
+                                    <div class="flex items-center gap-1">
+                                        ${[1, 2, 3, 4, 5].map(star => `
+                                            <button onclick="setRating('${item.id}', ${star})" class="text-sm transition ${star <= myVote.rating ? 'text-amber-400 scale-110' : 'text-zinc-700 hover:text-amber-300'}">
+                                                <i class="fa-solid fa-star"></i>
+                                            </button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+
+                                <!-- Botones de Decisión -->
+                                <div class="grid grid-cols-3 gap-1.5">
+                                    <button onclick="setDecision('${item.id}', 'YES')" class="py-1.5 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 ${myVote.decision === 'YES' ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/20' : 'bg-black/50 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10'}">
+                                        <i class="fa-solid fa-thumbs-up"></i> A favor
+                                    </button>
+                                    <button onclick="setDecision('${item.id}', 'MAYBE')" class="py-1.5 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 ${myVote.decision === 'MAYBE' ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20' : 'bg-black/50 text-amber-400 border border-amber-500/30 hover:bg-amber-500/10'}">
+                                        <i class="fa-solid fa-question"></i> Quizá
+                                    </button>
+                                    <button onclick="setDecision('${item.id}', 'NO')" class="py-1.5 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 ${myVote.decision === 'NO' ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20' : 'bg-black/50 text-rose-400 border border-rose-500/30 hover:bg-rose-500/10'}">
+                                        <i class="fa-solid fa-thumbs-down"></i> En contra
+                                    </button>
+                                </div>
+
+                                <!-- Input de Observaciones -->
+                                <div class="relative">
+                                    <input type="text" 
+                                        value="${myVote.comment || ''}" 
+                                        onchange="setComment('${item.id}', this.value)"
+                                        placeholder="Escribe tu nota u observación..." 
+                                        class="w-full bg-black/80 border border-brand-border rounded-xl text-[11px] px-3 py-1.5 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500">
+                                </div>
+                            </div>
+
+                            <!-- Estado del Escrutinio de los 4 Socios -->
+                            <div class="flex items-center justify-between pt-1">
+                                <span class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Votos del Equipo:</span>
+                                <div class="flex items-center gap-2">
+                                    ${partnerVotesPills}
+                                </div>
+                            </div>
+
+                            <!-- Desplegable de Comentarios del Equipo -->
+                            ${renderCommentsThread(item)}
+
+                        </div>
+
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Hilo de Comentarios por Platillo
+        function renderCommentsThread(item) {
+            const comments = Object.entries(item.votes)
+                .filter(([_, v]) => v.comment && v.comment.trim() !== '')
+                .map(([pId, v]) => {
+                    const partner = partners.find(p => p.id === pId);
+                    return `<div class="text-[11px] text-zinc-300 bg-black/40 p-2 rounded-lg border border-brand-border">
+                        <strong class="text-amber-400">${partner ? partner.name : pId}:</strong> "${v.comment}"
+                    </div>`;
+                });
+
+            if (comments.length === 0) return '';
+
+            return `
+                <details class="text-[11px] text-zinc-400">
+                    <summary class="cursor-pointer hover:text-amber-400 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 flex items-center gap-1">
+                        <i class="fa-solid fa-comments"></i> Ver notas de los socios (${comments.length})
+                    </summary>
+                    <div class="space-y-1.5 mt-2">
+                        ${comments.join('')}
+                    </div>
+                </details>
+            `;
+        }
+
+        // Acciones de Votación
+        function setRating(itemId, rating) {
+            const item = menuItems.find(i => i.id === itemId);
+            if (!item) return;
+
+            if (!item.votes[activePartnerId]) {
+                item.votes[activePartnerId] = { rating: 0, decision: null, comment: '' };
+            }
+
+            item.votes[activePartnerId].rating = rating;
+            saveLocalStorage();
+            renderMenu();
+        }
+
+        function setDecision(itemId, decision) {
+            const item = menuItems.find(i => i.id === itemId);
+            if (!item) return;
+
+            if (!item.votes[activePartnerId]) {
+                item.votes[activePartnerId] = { rating: 0, decision: null, comment: '' };
+            }
+
+            item.votes[activePartnerId].decision = decision;
+            saveLocalStorage();
+            renderMenu();
+        }
+
+        function setComment(itemId, commentText) {
+            const item = menuItems.find(i => i.id === itemId);
+            if (!item) return;
+
+            if (!item.votes[activePartnerId]) {
+                item.votes[activePartnerId] = { rating: 0, decision: null, comment: '' };
+            }
+
+            item.votes[activePartnerId].comment = commentText;
+            saveLocalStorage();
+        }
+
+        // Cálculo de Consenso Societario
+        function calculateConsensus(item) {
+            let yesVotes = 0;
+            let noVotes = 0;
+            let totalVotes = 0;
+
+            Object.values(item.votes).forEach(v => {
+                if (v.decision === 'YES') yesVotes++;
+                if (v.decision === 'NO') noVotes++;
+                if (v.decision) totalVotes++;
+            });
+
+            let status = 'DISCUSSION';
+            if (yesVotes >= 3) {
+                status = 'APPROVED';
+            } else if (noVotes >= 2) {
+                status = 'REJECTED';
+            }
+
+            return { yesVotes, noVotes, totalVotes, status };
+        }
+
+        function getActivePartnerName() {
+            const p = partners.find(x => x.id === activePartnerId);
+            return p ? p.name : 'Socio';
+        }
+
+        // Actualizar Indicadores Superiores
+        function updateOverviewStats() {
+            const total = menuItems.length;
+            const approved = menuItems.filter(i => calculateConsensus(i).status === 'APPROVED').length;
+            const discussion = menuItems.filter(i => calculateConsensus(i).status === 'DISCUSSION').length;
+            
+            const votedByPartner = menuItems.filter(i => i.votes[activePartnerId] && i.votes[activePartnerId].decision).length;
+            const progressPct = total > 0 ? Math.round((votedByPartner / total) * 100) : 0;
+
+            document.getElementById('statTotalItems').innerText = total;
+            document.getElementById('statApprovedItems').innerText = approved;
+            document.getElementById('statDiscussionItems').innerText = discussion;
+            document.getElementById('statPartnerProgress').innerText = `${progressPct}%`;
+        }
+
+        // Handlers de Modales
+        function openNewDishModal() {
+            document.getElementById('dishSource').value = `Propuesta de ${getActivePartnerName()}`;
+            document.getElementById('newDishModal').classList.remove('hidden');
+        }
+
+        function closeNewDishModal() {
+            document.getElementById('newDishModal').classList.add('hidden');
+            document.getElementById('newDishForm').reset();
+        }
+
+        function handleNewDishSubmit(e) {
+            e.preventDefault();
+            const newItem = {
+                id: 'custom_' + Date.now(),
+                name: document.getElementById('dishName').value.trim(),
+                category: document.getElementById('dishCategory').value,
+                source: document.getElementById('dishSource').value.trim() || `Propuesta de ${getActivePartnerName()}`,
+                description: document.getElementById('dishDescription').value.trim() || 'Propuesta registrada para escrutinio del equipo de socios.',
+                votes: {
+                    [activePartnerId]: { rating: 5, decision: 'YES', comment: 'Registrado por mí' }
+                }
+            };
+
+            menuItems.unshift(newItem);
+            saveLocalStorage();
+            closeNewDishModal();
+            renderMenu();
+        }
+
+        // Exportar e Importar Archivo de Votaciones (JSON)
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+                menuItems,
+                exportedBy: getActivePartnerName(),
+                exportedAt: new Date().toISOString()
+            }, null, 2));
+
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `Votacion_Menu_Morelia_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
+        }
+
+        function triggerImport() {
+            document.getElementById('importFileInput').click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.menuItems && Array.isArray(parsed.menuItems)) {
+                        menuItems = parsed.menuItems;
+                        saveLocalStorage();
+                        renderPartnerBadges();
+                        renderMenu();
+                        alert('¡Votaciones actualizadas e importadas con éxito!');
+                    } else {
+                        alert('El archivo no tiene el formato válido de votación.');
+                    }
+                } catch (err) {
+                    alert('Error al leer el archivo de votaciones.');
+                }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>
